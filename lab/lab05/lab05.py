@@ -169,6 +169,13 @@ def berry_finder(t):
                 return True
     return False
 
+    # Alternative solution
+    # 
+    # def berry_finder_alt(t):
+    # if label(t) == 'berry':
+    #     return True
+    # return True in [berry_finder(b) for b in branches(t)]
+
 
 def sprout_leaves(t, leaves):
     """Sprout new leaves containing the data in leaves at each leaf in
@@ -284,6 +291,9 @@ def riffle(deck):
     "*** YOUR CODE HERE ***"
     return [[deck[:len(deck)//2], deck[len(deck)//2:]][k % 2][k//2] for k in range(len(deck))]
 
+    # [deck[(i % 2) * len(deck) // 2 + i // 2] for i in range(len(deck))]
+
+
 
 def add_trees(t1, t2):
     """
@@ -325,18 +335,28 @@ def add_trees(t1, t2):
         return t2
     if not t2:
         return t1
-    if is_leaf(t1) and is_leaf(t2):
-        return tree(label(t1)+label(t2))
-    elif len(t1) < len(t2):
-        t1 += [None for _ in range(len(t1), len(t2))]
-        return add_trees(t1, t2)
-    elif len(t2) < len(t1):
-        t2 += [None for _ in range(len(t2), len(t1))]
-        return add_trees(t1, t2)
-    else:
-        lst = list(zip(t1, t2))
-        return tree(sum(lst[0]), [add_trees(i[0], i[1]) for i in lst[1:]])
+    new_label = label(t1) + label(t2)
+    t1_children, t2_children = branches(t1), branches(t2)
+    length_t1, length_t2 = len(t1_children), len(t2_children)
+    if length_t1 < length_t2:
+        t1_children += [None for _ in range(length_t1, length_t2)]
+    elif len(t1_children) > len(t2_children):
+        t2_children += [None for _ in range(length_t2, length_t1)]
+    return tree(new_label, [add_trees(child1, child2) for child1, child2 in zip(t1_children, t2_children)])
 
+    # Alternative solution
+    # 
+    # result_label = label(t1)+label(t2)
+    # result_branches = []
+    # i = 0
+    # while i < min(len(t1), len(t2)):
+    #     b1,b2 = branches(t1)[i],branches(t2)[i]
+    #     new_branches = add_trees(b1,b2)
+    #     result_branches += [new_branches]
+    #     i += 1
+    # result_branches += branches(t1)[i:]
+    # result_branches += branches(t2)[i:]
+    # return tree(result_label,result_branches)
 
 def build_successors_table(tokens):
     """Return a dictionary: keys are words; values are lists of successors.
