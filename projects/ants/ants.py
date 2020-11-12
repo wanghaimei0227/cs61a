@@ -241,13 +241,10 @@ class FireAnt(Ant):
         temp_place = self.place
         Ant.reduce_armor(self,amount)
         if self.place:
-            print("DEBUG:temp_place.bees    ",temp_place.bees)
             for bee in list(temp_place.bees):
                 Insect.reduce_armor(bee, amount)
         else:
-            print("DEBUG:temp_place.bees    ",temp_place.bees)
             for bee in list(temp_place.bees):
-                print("DEBUG:bee    ",bee)
                 Insect.reduce_armor(bee, self.damage + amount)
         
 class HungryAnt(Ant):
@@ -256,30 +253,42 @@ class HungryAnt(Ant):
     """
     name = 'Hungry'
     food_cost = 4
-    # OVERRIDE CLASS ATTRIBUTES HERE
-    # BEGIN Problem 6
-    implemented = False   # Change to True to view in the GUI
-    # END Problem 6
+    implemented = True
+    time_to_digest = 3  # holds the number of turns that it takes a HungryAnt to digest
 
     def __init__(self, armor=1):
-        # BEGIN Problem 6
-        "*** YOUR CODE HERE ***"
-        # END Problem 6
+        """Create an Ant with an ARMOR quantity."""
+        self.digesting = 0  # counts the number of turns it has left to digest
+        Ant.__init__(self, armor)
 
     def eat_bee(self, bee):
-        # BEGIN Problem 6
-        "*** YOUR CODE HERE ***"
-        # END Problem 6
+        """Eat a bee."""
+        Insect.reduce_armor(bee, bee.armor)
+        self.digesting = self.time_to_digest
 
     def action(self, gamestate):
-        # BEGIN Problem 6
-        "*** YOUR CODE HERE ***"
-        # END Problem 6
+        """Select a random Bee from its place and eat it whole.
+        After eating a Bee, it must spend 3 turns digesting before eating again. 
+        If there is no bee available to eat, it will do nothing.
+        """
+        if self.digesting > 0:
+                self.digesting -= 1
+        else:
+            if self.place.bees:
+                self.eat_bee(rANTdom_else_none(self.place.bees))
+
+class WallAnt(Ant):
+    "WallAnt does nothing each turn. It has a large armor value."
+
+    name = 'Wall'
+    food_cost = 4
+    implemented = True
+
+    def __init__(self, armor=4):
+        """Create an Ant with an ARMOR quantity."""
+        Ant.__init__(self, armor)
 
 
-# BEGIN Problem 7
-# The WallAnt class
-# END Problem 7
 
 
 class Water(Place):
