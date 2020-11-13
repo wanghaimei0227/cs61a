@@ -49,7 +49,7 @@ class Insect:
     """An Insect, the base class of Ant and Bee, has armor and a Place."""
 
     damage = 0
-    # ADD CLASS ATTRIBUTES HERE
+    is_watersafe = False
 
     def __init__(self, armor, place=None):
         """Create an Insect with an ARMOR amount and a starting PLACE."""
@@ -104,6 +104,7 @@ class Ant(Insect):
 
     def __init__(self, armor=1):
         """Create an Ant with an ARMOR quantity."""
+        self.double_damage = False
         Insect.__init__(self, armor)
 
     def can_contain(self, other):
@@ -158,7 +159,7 @@ class ThrowerAnt(Ant):
     damage = 1
     food_cost = 3
     min_range = 0
-    max_range = float('inf')
+    max_range = float('inf')    
 
     def nearest_bee(self, beehive):
         """Return the nearest Bee in a Place that is not the HIVE (beehive), connected to
@@ -167,13 +168,13 @@ class ThrowerAnt(Ant):
         This method returns None if there is no such Bee (or none in range).
         """
 
-        place_temp = self.place
+        temp_place = self.place
         dist = 0
-        while place_temp is not beehive:
-            if place_temp.bees and self.min_range <= dist <= self.max_range:
-                return rANTdom_else_none(place_temp.bees)
+        while temp_place is not beehive:
+            if temp_place.bees and self.min_range <= dist <= self.max_range:
+                return rANTdom_else_none(temp_place.bees)
             else:
-                place_temp = place_temp.entrance
+                temp_place = temp_place.entrance
                 dist += 1
         return None
 
@@ -289,40 +290,41 @@ class WallAnt(Ant):
         Ant.__init__(self, armor)
 
 
-
-
 class Water(Place):
     """Water is a place that can only hold watersafe insects."""
 
     def add_insect(self, insect):
         """Add an Insect to this place. If the insect is not watersafe, reduce
         its armor to 0."""
-        # BEGIN Problem 8
-        "*** YOUR CODE HERE ***"
-        # END Problem 8
 
-# BEGIN Problem 9
-# The ScubaThrower class
-# END Problem 9
+        Place.add_insect(self, insect)
+        if not insect.is_watersafe:
+            Insect.reduce_armor(insect, insect.armor)
+        
 
-# BEGIN Problem EC
+class ScubaThrower(ThrowerAnt):
+    """An ant that can be placed on water."""
+
+    name = 'Scuba'
+    food_cost = 6
+    is_watersafe = True
+    implemented = True
 
 
-class QueenAnt(Ant):  # You should change this line
-    # END Problem EC
+class QueenAnt(ScubaThrower):
     """The Queen of the colony. The game is over if a bee enters her place."""
 
     name = 'Queen'
     food_cost = 7
-    # OVERRIDE CLASS ATTRIBUTES HERE
-    # BEGIN Problem EC
-    implemented = False   # Change to True to view in the GUI
-    # END Problem EC
+    implemented = True
+    queen_counter = 0
 
     def __init__(self, armor=1):
-        # BEGIN Problem EC
-        "*** YOUR CODE HERE ***"
-        # END Problem EC
+        self.is_queen = True
+        QueenAnt.queen_counter += 1
+        if QueenAnt.queen_counter > 1:
+            self.is_queen = False
+        ScubaThrower.__init__(self, armor)
 
     def action(self, gamestate):
         """A queen ant throws a leaf, but also doubles the damage of ants
@@ -330,17 +332,32 @@ class QueenAnt(Ant):  # You should change this line
 
         Impostor queens do only one thing: reduce their own armor to 0.
         """
-        # BEGIN Problem EC
-        "*** YOUR CODE HERE ***"
-        # END Problem EC
+        
+        if not self.is_queen:
+            self.reduce_armor(self.armor)
+        else:
+            ThrowerAnt.action(self,gamestate)
+            temp_place = self.place.exit
+            while temp_place:
+                if temp_place.ant and not temp_place.ant.double_damage:
+                    temp_place.ant.damage *= 2
+                    temp_place.ant.double_damage = True
+                temp_place = temp_place.exit
 
     def reduce_armor(self, amount):
         """Reduce armor by AMOUNT, and if the True QueenAnt has no armor
         remaining, signal the end of the game.
         """
-        # BEGIN Problem EC
-        "*** YOUR CODE HERE ***"
-        # END Problem EC
+
+        Insect.reduce_armor(self, amount)
+        if self.is_queen and self.armor <= 0:
+            bees_win()
+
+    def remove_from(self, place):
+        """The true (first) queen cannot be removed."""
+
+        if not self.is_queen:
+            Ant.remove_from(self,place)
 
 
 class AntRemover(Ant):
@@ -358,7 +375,7 @@ class Bee(Insect):
 
     name = 'Bee'
     damage = 1
-    # OVERRIDE CLASS ATTRIBUTES HERE
+    is_watersafe = True
 
     def sting(self, ant):
         """Attack an ANT, reducing its armor by 1."""
